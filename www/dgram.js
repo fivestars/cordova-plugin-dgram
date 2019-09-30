@@ -1,78 +1,72 @@
 var exec = cordova.require('cordova/exec');
 
-// Events: 'message', 'error'
-function Socket(type, port) {
-    this._multicastSocket = type === 'multicast-udp4';
-    this._broadcastSocket = type === 'broadcast-udp4';
+function Socket(port, isBroadcast, success, error) {
+    // Each socket gets a unique id from this static value.
+    // Used on both sides of the bridge to identify each connection.
     this._socketId = ++Socket.socketCount;
     this._eventHandlers = { };
     Socket.sockets[this._socketId] = this;
-    exec(null, null, 'Dgram', 'create', [ this._socketId, this._multicastSocket, this._broadcastSocket, port ]);
+    exec(success, error, 'UdpPlugin', 'open', [ this._socketId, port, isBroadcast ? 1 : 0 ]);
 }
 
 Socket.socketCount = 0;
 Socket.sockets = { };
 
-Socket.prototype.on = function (event, callback) {
-    this._eventHandlers[event] = callback;
+Socket.prototype.on = function (eventType, callback) {
+    this._eventHandlers[eventType] = callback;
 };
 
-Socket.prototype.bind = function (callback) {
-    callback = callback || function () { };
-    exec(callback.bind(null, null), callback.bind(null), 'Dgram', 'bind', [ this._socketId ]);
+Socket.prototype.listen = function (success, error) {
+    exec(success, error, 'UdpPlugin', 'listen', [ this._socketId ]);
 };
 
-Socket.prototype.close = function () {
-    exec(null, null, 'Dgram', 'close', [ this._socketId ]);
+Socket.prototype.close = function (success, error) {
+    exec(success, error, 'UdpPlugin', 'close', [ this._socketId ]);
     delete Socket.sockets[this._socketId];
     this._socketId = 0;
 };
 
-// sends utf-8 or base64 based on encoding
-Socket.prototype.send = function (buffer, destAddress, destPort, callback, encoding) {
-    callback = callback || function () { };
-    encoding = encoding || 'utf-8';
-    exec(callback.bind(null, null), // success
-         callback.bind(null), // failure
-         'Dgram',
-         'send',
-         [ this._socketId, buffer, destAddress, destPort, encoding ]);
+Socket.prototype.send = function (msg, destAddress, destPort, error) {
+    exec(null, error, 'UdpPlugin', 'send', [ this._socketId, msg, destAddress, destPort ]);
 };
 
 Socket.prototype.address = function () {
 };
 
-Socket.prototype.joinGroup = function (address, callback) {
-    callback = callback || function () { };
-    if (!this._multicastSocket) throw new Error('Invalid operation');
-    exec(callback.bind(null, null), callback.bind(null), 'Dgram', 'joinGroup', [ this._socketId, address ]);
-};
-
-Socket.prototype.leaveGroup = function (address, callback) {
-    callback = callback || function () { };
-    if (!this._multicastSocket) throw new Error('Invalid operation');
-    exec(callback.bind(null, null), callback.bind(null), 'Dgram', 'leaveGroup', [ this._socketId, address ]);
-};
-
-function createSocket(type, port) {
-    if (type !== 'udp4' && type !== 'multicast-udp4' && type !== 'broadcast-udp4') {
-        throw new Error('Illegal Argument, only udp4, multicast-udp4 and broadcast-udp4 supported');
-    }
+function createSocket(port, isBroadcast, success, error) {
     iport = parseInt(port, 10);
     if (isNaN(iport) || iport === 0){
         throw new Error('Illegal Port number');
     }
-    return new Socket(type, iport);
+    return new Socket(iport, isBroadcast, success, error);
 }
 
-function onMessage(id, msg, remoteAddress, remotePort) {
+function onMessage(id, message, remoteAddress, remotePort) {
     var socket = Socket.sockets[id];
     if (socket && 'message' in socket._eventHandlers) {
-        socket._eventHandlers['message'].call(null, msg, { address: remoteAddress, port: remotePort });
+        socket._eventHandlers['message'].call(null, message, { address: remoteAddress, port: remotePort });
+    }
+}
+
+function onSend(id) {
+    var socket = Socket.sockets[id];
+    if (socket && 'send' in socket._eventHandlers) {
+        socket._eventHandlers['send']();
+    }
+}
+
+function onError(id, action, errorMessage) {
+    var socket = Socket.sockets[id];
+    if (socket && 'error' in socket._eventHandlers) {
+        socket._eventHandlers['error'].call(null, action, errorMessage);
     }
 }
 
 module.exports = {
     createSocket: createSocket,
-    _onMessage: onMessage
+    // These handlers are used by Cordova as callbacks,
+    // but should not be used directly from JS
+    _onMessage: onMessage,
+    _onSend: onSend,
+    _onError: onError
 };
