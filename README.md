@@ -8,6 +8,3 @@ Cordova plugin for sending datagram/UDP. Supports multicast UDP.
 * iOS support
 * Support for broadcasting
 * Support for passing data to plugin as Base64 string
-
-
-test
