@@ -1,6 +1,6 @@
 var exec = cordova.require('cordova/exec');
 
-// Events: 'message', 'error' asdfasdfasdf
+// Events: 'message', 'error'
 function Socket(type, port) {
     this._multicastSocket = type === 'multicast-udp4';
     this._broadcastSocket = type === 'broadcast-udp4';
