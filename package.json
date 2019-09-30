@@ -5,8 +5,7 @@
   "cordova": {
     "id": "cordova-plugin-dgram",
     "platforms": [
-      "android",
-      "ios"
+      "android"
     ]
   },
   "repository": {
@@ -15,7 +14,6 @@
   },
   "keywords": [
     "UDP",
-    "Multicast",
     "Datagram",
     "dgram",
     "ecosystem:cordova",
