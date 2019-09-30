@@ -40,7 +40,7 @@ public class Dgram extends CordovaPlugin {
 
     private class SendJavascript extends Thread {
         public void run() {
-            final String CORDOVA_REQUIRE = "cordova.require('com.fivestars.plugin.udp.udp').";
+            final String CORDOVA_REQUIRE = "cordova.require('cordova-plugin-dgram.dgram').";
             final int JAVASCRIPT_SLEEP = 50;
 
             while(true) {
