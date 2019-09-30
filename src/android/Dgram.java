@@ -30,7 +30,7 @@ public class Dgram extends CordovaPlugin {
     ArrayBlockingQueue<String> m_javascriptQueue;
     SendJavascript m_sendJavascript;
 
-    public UdpPlugin() {
+    public Dgram() {
         m_datagramSockets = new SparseArray<DatagramSocket>();
         m_datagramSocketListeners = new SparseArray<DatagramSocketListener>();
         m_javascriptQueue = new ArrayBlockingQueue<String>(1000);
@@ -45,8 +45,8 @@ public class Dgram extends CordovaPlugin {
 
             while(true) {
                 try {
-                    String javascript = UdpPlugin.this.m_javascriptQueue.take();
-                    UdpPlugin.this.webView.sendJavascript(CORDOVA_REQUIRE + javascript);
+                    String javascript = Dgram.this.m_javascriptQueue.take();
+                    Dgram.this.webView.sendJavascript(CORDOVA_REQUIRE + javascript);
                     Thread.sleep(JAVASCRIPT_SLEEP);
                 } catch (InterruptedException e) {
                     Log.d(TAG, e.toString());
@@ -88,7 +88,7 @@ public class Dgram extends CordovaPlugin {
                     String address = datagramPacket.getAddress().getHostAddress();
                     int port = datagramPacket.getPort();
                     Log.d(TAG, "Received message " + message + " from " + address);
-                    UdpPlugin.this.m_javascriptQueue.put("_onMessage("
+                    Dgram.this.m_javascriptQueue.put("_onMessage("
                             + this.m_datagramSocketId + ","
                             + "'" + message + "',"
                             + "'" + address + "',"
@@ -99,7 +99,7 @@ public class Dgram extends CordovaPlugin {
                     Log.d(TAG, "Receive exception:" + e.toString());
 
                     try {
-                        UdpPlugin.this.m_javascriptQueue.put("_onError("
+                        Dgram.this.m_javascriptQueue.put("_onError("
                                 + this.m_datagramSocketId
                                 + ",'receive','"
                                 + e.toString() + "');");
@@ -150,14 +150,14 @@ public class Dgram extends CordovaPlugin {
                         this.m_port
                 );
                 this.m_datagramSocket.send(packet);
-                UdpPlugin.this.m_javascriptQueue.put("_onSend(" + this.m_datagramSocketId + ");");
+                Dgram.this.m_javascriptQueue.put("_onSend(" + this.m_datagramSocketId + ");");
             } catch (InterruptedException e) {
                 Log.d(TAG, e.toString());
             } catch (Exception e) {
                 Log.e(TAG, "Send exception: " + e.toString(), e);
 
                 try {
-                    UdpPlugin.this.m_javascriptQueue.put("_onError("
+                    Dgram.this.m_javascriptQueue.put("_onError("
                             + this.m_datagramSocketId
                             + ",'send','"
                             + e.toString() + "');");
