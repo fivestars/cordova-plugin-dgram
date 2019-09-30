@@ -2,7 +2,6 @@ package org.apache.cordova.dgram;
 
 import android.util.Log;
 import android.util.SparseArray;
-import android.util.Base64;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -17,10 +16,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Enumeration;
+
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Dgram extends CordovaPlugin {
     private static final String TAG = Dgram.class.getSimpleName();
