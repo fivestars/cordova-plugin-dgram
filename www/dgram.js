@@ -6,7 +6,7 @@ function Socket(port, isBroadcast, success, error) {
     this._socketId = ++Socket.socketCount;
     this._eventHandlers = { };
     Socket.sockets[this._socketId] = this;
-    exec(success, error, 'UdpPlugin', 'open', [ this._socketId, port, isBroadcast ? 1 : 0 ]);
+    exec(success, error, 'Dgram', 'open', [ this._socketId, port, isBroadcast ? 1 : 0 ]);
 }
 
 Socket.socketCount = 0;
@@ -17,17 +17,17 @@ Socket.prototype.on = function (eventType, callback) {
 };
 
 Socket.prototype.listen = function (success, error) {
-    exec(success, error, 'UdpPlugin', 'listen', [ this._socketId ]);
+    exec(success, error, 'Dgram', 'listen', [ this._socketId ]);
 };
 
 Socket.prototype.close = function (success, error) {
-    exec(success, error, 'UdpPlugin', 'close', [ this._socketId ]);
+    exec(success, error, 'Dgram', 'close', [ this._socketId ]);
     delete Socket.sockets[this._socketId];
     this._socketId = 0;
 };
 
 Socket.prototype.send = function (msg, destAddress, destPort, error) {
-    exec(null, error, 'UdpPlugin', 'send', [ this._socketId, msg, destAddress, destPort ]);
+    exec(null, error, 'Dgram', 'send', [ this._socketId, msg, destAddress, destPort ]);
 };
 
 Socket.prototype.address = function () {
