@@ -24,13 +24,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class Dgram extends CordovaPlugin {
     private static final String TAG = Dgram.class.getSimpleName();
 
-    SparseArray<DatagramSocket> m_datagramSockets;
+    DatagramSocket datagramSocket;
     SparseArray<DatagramSocketListener> m_datagramSocketListeners;
     ArrayBlockingQueue<String> m_javascriptQueue;
     SendJavascript m_sendJavascript;
 
     public Dgram() {
-        m_datagramSockets = new SparseArray<DatagramSocket>();
         m_datagramSocketListeners = new SparseArray<DatagramSocketListener>();
         m_javascriptQueue = new ArrayBlockingQueue<String>(1000);
         m_sendJavascript = new SendJavascript();
@@ -55,14 +54,11 @@ public class Dgram extends CordovaPlugin {
     }
 
     private class DatagramSocketListener extends Thread {
-        int m_datagramSocketId;
         DatagramSocket m_datagramSocket;
 
         public DatagramSocketListener(
-                int datagramSocketId,
                 DatagramSocket datagramSocket
         ) {
-            this.m_datagramSocketId = datagramSocketId;
             this.m_datagramSocket = datagramSocket;
         }
 
@@ -174,16 +170,14 @@ public class Dgram extends CordovaPlugin {
     ) throws SocketException {
         DatagramSocket datagramSocket = new DatagramSocket(port);
         datagramSocket.setBroadcast(isBroadcast);
-        m_datagramSockets.put(datagramSocketId, datagramSocket);
+        this.datagramSocket = datagramSocket;
     }
 
     private void startListening(
-            final int datagramSocketId,
             final DatagramSocket datagramSocket
     ) {
         closeListener(datagramSocketId);
         DatagramSocketListener datagramSocketListener = new DatagramSocketListener(
-                datagramSocketId,
                 datagramSocket
         );
         m_datagramSocketListeners.put(datagramSocketId, datagramSocketListener);
@@ -199,7 +193,7 @@ public class Dgram extends CordovaPlugin {
                 datagramSocket.close();
             }
 
-            m_datagramSockets.remove(datagramSocketId);
+            this.datagramSocket = null;
             closeListener(datagramSocketId);
         }
     }
@@ -222,7 +216,6 @@ public class Dgram extends CordovaPlugin {
             final CallbackContext callbackContext
     ) throws JSONException {
         final int datagramSocketId = data.getInt(0);
-        DatagramSocket datagramSocket = m_datagramSockets.get(datagramSocketId);
         Log.d(TAG, "Call to execute " + action + " " + data.toString());
 
         if (!(action.equals("open") || action.equals("listen") || action.equals("send") || action.equals("close"))) {
@@ -238,13 +231,13 @@ public class Dgram extends CordovaPlugin {
 
         try {
             if (action.equals("open")) {
-                close(datagramSocketId, datagramSocket);
+                close(datagramSocket);
                 final int port = data.getInt(1);
                 final boolean isBroadcast = data.getInt(2) == 1;
                 open(datagramSocketId, port, isBroadcast);
                 callbackContext.success();
             } else if (action.equals("listen")) {
-                startListening(datagramSocketId, datagramSocket);
+                startListening(datagramSocket);
                 callbackContext.success();
             } else if (action.equals("send")) {
                 final String message = data.getString(1);
@@ -259,7 +252,7 @@ public class Dgram extends CordovaPlugin {
                 ));
                 callbackContext.success();
             } else if (action.equals("close")) {
-                close(datagramSocketId, datagramSocket);
+                close(datagramSocket);
                 callbackContext.success();
             }
         } catch (Exception e) {
