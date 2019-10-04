@@ -1,3 +1,4 @@
+cordova.define("cordova-plugin-dgram.dgram", function(require, exports, module) {
 var exec = cordova.require('cordova/exec');
 
 function Socket(port, isBroadcast, success, error) {
@@ -39,7 +40,7 @@ function createSocket(port, isBroadcast, success, error) {
 }
 
 function onMessage(id, message, remoteAddress, remotePort) {
-    var socket = Socket.sockets[id];
+    var socket = Socket.socket;
     if (socket && 'message' in socket._eventHandlers) {
         socket._eventHandlers['message'].call(null, message, { address: remoteAddress, port: remotePort });
     }
@@ -67,3 +68,4 @@ module.exports = {
     _onSend: onSend,
     _onError: onError
 };
+});
