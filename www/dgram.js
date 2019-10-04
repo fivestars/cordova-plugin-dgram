@@ -1,16 +1,13 @@
 var exec = cordova.require('cordova/exec');
 
 function Socket(port, isBroadcast, success, error) {
-    // Each socket gets a unique id from this static value.
-    // Used on both sides of the bridge to identify each connection.
-    this._socketId = ++Socket.socketCount;
     this._eventHandlers = { };
-    Socket.sockets[this._socketId] = this;
+    Socket.socket = this;
     exec(success, error, 'Dgram', 'open', [ this._socketId, port, isBroadcast ? 1 : 0 ]);
 }
 
 Socket.socketCount = 0;
-Socket.sockets = { };
+Socket.socket = { };
 
 Socket.prototype.on = function (eventType, callback) {
     this._eventHandlers[eventType] = callback;
@@ -56,7 +53,7 @@ function onSend(id) {
 }
 
 function onError(id, action, errorMessage) {
-    var socket = Socket.sockets[id];
+    var socket = Socket.socket;
     if (socket && 'error' in socket._eventHandlers) {
         socket._eventHandlers['error'].call(null, action, errorMessage);
     }
