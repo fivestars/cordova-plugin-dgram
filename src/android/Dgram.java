@@ -1,63 +1,41 @@
 package org.apache.cordova.dgram;
 
 import android.util.Log;
-import android.util.SparseArray;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+
 
 public class Dgram extends CordovaPlugin {
     private static final String TAG = Dgram.class.getSimpleName();
 
-    DatagramSocket datagramSocket;
-    DatagramSocketListener datagramSocketListener;
-    ArrayBlockingQueue<String> m_javascriptQueue;
-    SendJavascript m_sendJavascript;
+    private static final String OPEN_ACTION = "open";
+    private static final String ON_MESSAGE_ACTION = "onMessage";
+    private static final String SEND_ACTION = "send";
+    private static final String CLOSE_ACTION = "close";
 
-    public Dgram() {
-        m_javascriptQueue = new ArrayBlockingQueue<String>(1000);
-        m_sendJavascript = new SendJavascript();
-        m_sendJavascript.start();
-        Log.e(TAG, "dgram - Instantiating dgram");
-    }
+    private DatagramSocket datagramSocket;
+    private DatagramSocketListener datagramSocketListener;
 
-    private class SendJavascript extends Thread {
-        public void run() {
-            final String CORDOVA_REQUIRE = "cordova.require('cordova-plugin-dgram.dgram').";
-            final int JAVASCRIPT_SLEEP = 50;
+    private CallbackContext onMessageCallback;
 
-            while(true) {
-                try {
-                    String javascript = Dgram.this.m_javascriptQueue.take();
-                    Dgram.this.webView.sendJavascript(CORDOVA_REQUIRE + javascript);
-                    Thread.sleep(JAVASCRIPT_SLEEP);
-                } catch (InterruptedException e) {
-                    Log.d(TAG, e.toString());
-                }
-            }
-        }
-    }
+    public Dgram() { }
 
     private class DatagramSocketListener extends Thread {
         DatagramSocket m_datagramSocket;
 
-        public DatagramSocketListener(
+        DatagramSocketListener(
                 DatagramSocket datagramSocket
         ) {
             this.m_datagramSocket = datagramSocket;
@@ -84,112 +62,170 @@ public class Dgram extends CordovaPlugin {
                     String address = datagramPacket.getAddress().getHostAddress();
                     int port = datagramPacket.getPort();
                     Log.d(TAG, "Received message " + message + " from " + address);
-                    Dgram.this.m_javascriptQueue.put("_onMessage("
-                            + "'" + message + "',"
-                            + "'" + address + "',"
-                            + port + ");");
-                } catch (InterruptedException e) {
-                    Log.d(TAG, e.toString());
-                } catch (Exception e) {
-                    Log.d(TAG, "Receive exception:" + e.toString());
-
-                    try {
-                        Dgram.this.m_javascriptQueue.put("_onError("
-                                + ",'receive','"
-                                + e.toString() + "');");
-                    } catch (Exception innerException) {
-                        Log.e(TAG, "Receive exception:" + innerException.toString());
-                    } finally {
-                        return;
+                    if (onMessageCallback != null) {
+                        if (sendMessageResult(message, address, port)) return;
                     }
+                } catch (Exception e) {
+                    Log.d(TAG, "Received exception:" + e.toString());
+                    if (sendMessageErrorResult(e)) return;
                 }
             }
         }
     }
 
+    private boolean sendMessageResult(String message, String address, int port) {
+        JSONObject payload = new JSONObject();
+
+        try {
+            payload.put("message", message.trim());
+            payload.put("address", address);
+            payload.put("port", port);
+        } catch (Exception e) {
+            PluginResult result = new PluginResult(
+                    PluginResult.Status.ERROR,
+                    "Error occurred while creating onMessage payload: " + e.toString()
+            );
+            CallbackUtil.sendPluginResult(onMessageCallback, result);
+            return true;
+        }
+
+        CallbackUtil.sendPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.OK, payload));
+        return false;
+    }
+
+    private boolean sendMessageErrorResult(Exception e) {
+        try {
+            JSONObject payload = new JSONObject();
+
+            try {
+                payload.put("error", e.toString());
+
+            } catch (Exception exception) {
+                Log.e(TAG, exception.toString());
+                PluginResult result = new PluginResult(
+                        PluginResult.Status.ERROR,
+                        "Error occurred while creating onMessage payload: " + e.toString()
+                );
+                CallbackUtil.sendPluginResult(onMessageCallback, result);
+                return true;
+            }
+            CallbackUtil.sendPluginResult(onMessageCallback,
+                    new PluginResult(PluginResult.Status.ERROR, payload)
+            );
+        } catch (Exception innerException) {
+            Log.e(TAG, "Received exception:" + innerException.toString());
+        }
+        return false;
+    }
+
     private class DatagramSocketSend implements Runnable {
-        String m_message;
-        String m_address;
-        int m_port;
-        int m_datagramSocketId;
-        DatagramSocket m_datagramSocket;
+        CallbackContext sendCallback;
+        String message;
+        String address;
+        int port;
 
         public DatagramSocketSend(
-                final String message,
+                CallbackContext callbackContext, final String message,
                 final String address,
-                final int port,
-                final DatagramSocket datagramSocket
+                final int port
         ) {
-            this.m_message = message;
-            this.m_address = address;
-            this.m_port = port;
-            this.m_datagramSocket = datagramSocket;
+            this.sendCallback = callbackContext;
+            this.message = message;
+            this.address = address;
+            this.port = port;
         }
 
         public void run() {
             try {
-                if (this.m_datagramSocket.isClosed()) {
+                if (datagramSocket.isClosed()) {
                     Log.d(TAG, "Trying to send but socket closed");
                     return;
                 }
 
                 // Threaded send to prevent NetworkOnMainThreadException
-                final byte[] bytes = this.m_message.getBytes("UTF-8");
+                final byte[] bytes = this.message.getBytes(StandardCharsets.UTF_8);
                 final DatagramPacket packet = new DatagramPacket(
                         bytes,
                         bytes.length,
-                        InetAddress.getByName(this.m_address),
-                        this.m_port
+                        InetAddress.getByName(this.address),
+                        this.port
                 );
-                this.m_datagramSocket.send(packet);
-                Dgram.this.m_javascriptQueue.put("_onSend");
-            } catch (InterruptedException e) {
-                Log.d(TAG, e.toString());
+                datagramSocket.send(packet);
+                sendCallback.success();
             } catch (Exception e) {
                 Log.e(TAG, "Send exception: " + e.toString(), e);
-
-                try {
-                    Dgram.this.m_javascriptQueue.put("_onError("
-                            + ",'send','"
-                            + e.toString() + "');");
-                } catch (Exception innerException) {
-                    Log.e(TAG, "Send exception: " + e.toString());
-                }
+                sendCallback.error("Send exception: " + e.toString());
             }
         }
     }
 
-    private void open(
-            final int port,
-            final boolean isBroadcast
-    ) throws SocketException {
+    @Override
+    public boolean execute(final String action, final JSONArray data,
+                           final CallbackContext callbackContext) throws JSONException {
+        Log.e(TAG, "Call to execute " + action + " " + data.toString());
+
+        if (!(action.equals(OPEN_ACTION) || action.equals(ON_MESSAGE_ACTION) || action.equals(SEND_ACTION) || action.equals(CLOSE_ACTION))) {
+            // Returning false results in an INVALID_ACTION error,
+            // which translates to an error callback in the JavaScript
+            return false;
+        }
+
+        if (datagramSocket == null && !action.equals(OPEN_ACTION)) {
+            callbackContext.error("DatagramSocket has not been opened!");
+            return true;
+        }
+
+        switch (action) {
+            case OPEN_ACTION:
+                openSocket(action, data, callbackContext);
+                break;
+
+            case ON_MESSAGE_ACTION:
+                startListening(callbackContext);
+                break;
+
+            case SEND_ACTION:
+                final String message = data.getString(0);
+                final String address = data.getString(1);
+                final int sendPort = data.getInt(2);
+                cordova.getThreadPool().execute(new DatagramSocketSend(callbackContext,
+                        message,
+                        address,
+                        sendPort
+                ));
+                break;
+
+            case CLOSE_ACTION:
+                closeSocket();
+                callbackContext.success();
+                break;
+        }
+
+        return true;
+    }
+
+    private void openSocket(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
+        closeSocket();
+        final int port = data.getInt(0);
+        final boolean isBroadcast = data.getInt(1) == 1;
+        try {
+            open(port, isBroadcast);
+        } catch (SocketException e) {
+            Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
+            callbackContext.error("'" + e.toString() + "'");
+        }
+        callbackContext.success();
+    }
+
+    private void open(final int port, final boolean isBroadcast) throws SocketException {
         DatagramSocket datagramSocket = new DatagramSocket(port);
         datagramSocket.setBroadcast(isBroadcast);
         this.datagramSocket = datagramSocket;
-        Log.e(TAG, "darran - Opening socket");
-        final byte[] bytes;
-        try {
-            bytes = "woot".getBytes("UTF-8");
-
-            final DatagramPacket packet = new DatagramPacket(
-                    bytes,
-                    bytes.length,
-                    InetAddress.getByName("255.255.255.255"),
-                    7777);
-
-
-            datagramSocket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
-    private void startListening(
-            final DatagramSocket datagramSocket
-    ) {
-        Log.e(TAG, "darran - Attempting to listen");
+    private void startListening(CallbackContext callbackContext) {
         closeListener();
+        onMessageCallback = callbackContext;
         DatagramSocketListener datagramSocketListener = new DatagramSocketListener(
                 datagramSocket
         );
@@ -197,12 +233,7 @@ public class Dgram extends CordovaPlugin {
         datagramSocketListener.start();
     }
 
-    private void close(
-            final DatagramSocket datagramSocket
-    ) {
-
-        Log.e(TAG, "darran - Closing socket");
-
+    private void closeSocket() {
         if (datagramSocket != null) {
             if (!datagramSocket.isClosed()) {
                 datagramSocket.close();
@@ -214,8 +245,6 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void closeListener() {
-        Log.e(TAG, "darran - Closing listener");
-
         final DatagramSocketListener datagramSocketListener = this.datagramSocketListener;
 
         if (datagramSocketListener != null) {
@@ -224,55 +253,4 @@ public class Dgram extends CordovaPlugin {
         }
     }
 
-    @Override
-    public boolean execute(
-            final String action,
-            final JSONArray data,
-            final CallbackContext callbackContext
-    ) throws JSONException {
-        Log.e(TAG, "Call to execute " + action + " " + data.toString());
-
-        if (!(action.equals("open") || action.equals("listen") || action.equals("send") || action.equals("close"))) {
-            // Returning false results in an INVALID_ACTION error,
-            // which translates to an error callback in the JavaScript
-            return false;
-        }
-
-        if (datagramSocket == null && !action.equals("open")) {
-            callbackContext.error("DatagramSocket has not been opened!");
-            return true;
-        }
-
-        try {
-            if (action.equals("open")) {
-                close(datagramSocket);
-                final int port = data.getInt(0);
-                final boolean isBroadcast = data.getInt(1) == 1;
-                open(port, isBroadcast);
-                callbackContext.success();
-            } else if (action.equals("listen")) {
-                startListening(datagramSocket);
-                callbackContext.success();
-            } else if (action.equals("send")) {
-                final String message = data.getString(0);
-                final String address = data.getString(1);
-                final int port = data.getInt(2);
-                cordova.getThreadPool().execute(new DatagramSocketSend(
-                        message,
-                        address,
-                        port,
-                        datagramSocket
-                ));
-                callbackContext.success();
-            } else if (action.equals("close")) {
-                close(datagramSocket);
-                callbackContext.success();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
-            callbackContext.error("'" + e.toString() + "'");
-        }
-
-        return true;
-    }
 }

@@ -1,11 +1,10 @@
+cordova.define("cordova-plugin-dgram.dgram", function(require, exports, module) {
 var exec = cordova.require('cordova/exec');
 
 function Socket(port, isBroadcast, success, error) {
     this._eventHandlers = { };
     Socket.socket = this;
-    console.log("about to send exec command");
     exec(success, error, 'Dgram', 'open', [ port, isBroadcast ? 1 : 0 ]);
-    console.log("sent socket exec command");
 }
 
 Socket.socketCount = 0;
@@ -16,7 +15,6 @@ Socket.prototype.on = function (eventType, callback) {
 };
 
 Socket.prototype.listen = function (success, error) {
-    console.log("attempting to listen");
     exec(success, error, 'Dgram', 'listen');
 };
 
@@ -38,15 +36,12 @@ function createSocket(port, isBroadcast, success, error) {
     if (isNaN(iport) || iport === 0){
         throw new Error('Illegal Port number');
     }
-    console.log("attempting to open socket");
     return new Socket(iport, isBroadcast, success, error);
 }
 
-function onMessage(id, message, remoteAddress, remotePort) {
-    console.log("calling onMessage");
+function onMessage(message, remoteAddress, remotePort) {
     var socket = Socket.socket;
     if (socket && 'message' in socket._eventHandlers) {
-        console.log("set event handlers");
         socket._eventHandlers['message'].call(null, message, { address: remoteAddress, port: remotePort });
     }
 }
