@@ -202,11 +202,11 @@ public class Dgram extends CordovaPlugin {
         final boolean isBroadcast = data.getInt(1) == 1;
         try {
             open(port, isBroadcast);
+            callbackContext.success();
         } catch (SocketException e) {
             Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
             callbackContext.error("'" + e.toString() + "'");
         }
-        callbackContext.success();
     }
 
     private void open(final int port, final boolean isBroadcast) throws SocketException {
