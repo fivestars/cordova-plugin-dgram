@@ -63,11 +63,11 @@ public class Dgram extends CordovaPlugin {
                     int port = datagramPacket.getPort();
                     Log.d(TAG, "Received message " + message + " from " + address);
                     if (onMessageCallback != null) {
-                        if (sendMessageResult(message, address, port)) return;
+                        sendMessageResult(message, address, port);
                     }
                 } catch (Exception e) {
                     Log.d(TAG, "Received exception:" + e.toString());
-                    if (sendMessageErrorResult(e)) return;
+                    sendMessageErrorResult(e);
                 }
             }
         }
@@ -95,7 +95,7 @@ public class Dgram extends CordovaPlugin {
         try {
             JSONObject payload = new JSONObject();
 
-            payyload.put("error", e.toString());
+            payload.put("error", e.toString());
 
             CallbackUtil.sendPluginResult(onMessageCallback,
                     new PluginResult(PluginResult.Status.ERROR, payload)
