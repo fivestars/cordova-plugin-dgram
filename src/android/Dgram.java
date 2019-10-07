@@ -73,49 +73,41 @@ public class Dgram extends CordovaPlugin {
         }
     }
 
-    private boolean sendMessageResult(String message, String address, int port) {
+    private void sendMessageResult(String message, String address, int port) {
         JSONObject payload = new JSONObject();
 
         try {
             payload.put("message", message.trim());
             payload.put("address", address);
             payload.put("port", port);
+            CallbackUtil.sendPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.OK, payload));
         } catch (Exception e) {
             PluginResult result = new PluginResult(
                     PluginResult.Status.ERROR,
                     "Error occurred while creating onMessage payload: " + e.toString()
             );
             CallbackUtil.sendPluginResult(onMessageCallback, result);
-            return true;
+            return;
         }
-
-        CallbackUtil.sendPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.OK, payload));
-        return false;
     }
 
-    private boolean sendMessageErrorResult(Exception e) {
+    private void sendMessageErrorResult(Exception e) {
         try {
             JSONObject payload = new JSONObject();
 
-            try {
-                payload.put("error", e.toString());
+            payyload.put("error", e.toString());
 
-            } catch (Exception exception) {
-                Log.e(TAG, exception.toString());
-                PluginResult result = new PluginResult(
-                        PluginResult.Status.ERROR,
-                        "Error occurred while creating onMessage payload: " + e.toString()
-                );
-                CallbackUtil.sendPluginResult(onMessageCallback, result);
-                return true;
-            }
             CallbackUtil.sendPluginResult(onMessageCallback,
                     new PluginResult(PluginResult.Status.ERROR, payload)
             );
-        } catch (Exception innerException) {
-            Log.e(TAG, "Received exception:" + innerException.toString());
+        } catch (Exception exception) {
+            Log.e(TAG, "Exception generating payload:" + exception.toString());
+            PluginResult result = new PluginResult(
+                    PluginResult.Status.ERROR,
+                    "Error occurred while creating onMessage payload: " + e.toString()
+            );
+            CallbackUtil.sendPluginResult(onMessageCallback, result);
         }
-        return false;
     }
 
     private class DatagramSocketSend implements Runnable {
