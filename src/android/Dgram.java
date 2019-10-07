@@ -199,7 +199,7 @@ public class Dgram extends CordovaPlugin {
     private void openSocket(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         closeSocket();
         final int port = data.getInt(0);
-        final boolean isBroadcast = data.getInt(1) == 1;
+        final boolean isBroadcast = data.getBoolean(1);
         try {
             open(port, isBroadcast);
             callbackContext.success();
