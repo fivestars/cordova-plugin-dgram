@@ -4,7 +4,9 @@ var exec = cordova.require('cordova/exec');
 function Socket(port, isBroadcast, success, error) {
     this._eventHandlers = { };
     Socket.socket = this;
-    exec(success, error, 'Dgram', 'open', [ this._socketId, port, isBroadcast ? 1 : 0 ]);
+    console.log("about to send exec command");
+    exec(success, error, 'Dgram', 'open', [ port, isBroadcast ? 1 : 0 ]);
+    console.log("sent socket exec command");
 }
 
 Socket.socketCount = 0;
@@ -15,7 +17,8 @@ Socket.prototype.on = function (eventType, callback) {
 };
 
 Socket.prototype.listen = function (success, error) {
-    exec(success, error, 'Dgram', 'listen', [ this._socketId ]);
+    console.log("attempting to listen");
+    exec(success, error, 'Dgram', 'listen');
 };
 
 Socket.prototype.close = function (success, error) {
@@ -25,7 +28,7 @@ Socket.prototype.close = function (success, error) {
 };
 
 Socket.prototype.send = function (msg, destAddress, destPort, error) {
-    exec(null, error, 'Dgram', 'send', [ this._socketId, msg, destAddress, destPort ]);
+    exec(null, error, 'Dgram', 'send', [ msg, destAddress, destPort ]);
 };
 
 Socket.prototype.address = function () {
@@ -36,20 +39,22 @@ function createSocket(port, isBroadcast, success, error) {
     if (isNaN(iport) || iport === 0){
         throw new Error('Illegal Port number');
     }
+    console.log("attempting to open socket");
     return new Socket(iport, isBroadcast, success, error);
 }
 
 function onMessage(id, message, remoteAddress, remotePort) {
+    console.log("calling onMessage");
     var socket = Socket.socket;
     if (socket && 'message' in socket._eventHandlers) {
+        console.log("set event handlers");
         socket._eventHandlers['message'].call(null, message, { address: remoteAddress, port: remotePort });
     }
 }
 
 function onSend(id) {
-    var socket = Socket.sockets[id];
-    if (socket && 'send' in socket._eventHandlers) {
-        socket._eventHandlers['send']();
+    if (Socket.socket && 'send' in Socket.socket._eventHandlers) {
+        Socket.socket._eventHandlers['send']();
     }
 }
 

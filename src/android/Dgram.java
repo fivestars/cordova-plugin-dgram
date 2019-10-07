@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -33,6 +34,7 @@ public class Dgram extends CordovaPlugin {
         m_javascriptQueue = new ArrayBlockingQueue<String>(1000);
         m_sendJavascript = new SendJavascript();
         m_sendJavascript.start();
+        Log.e(TAG, "dgram - Instantiating dgram");
     }
 
     private class SendJavascript extends Thread {
@@ -116,13 +118,11 @@ public class Dgram extends CordovaPlugin {
                 final String message,
                 final String address,
                 final int port,
-                final int datagramSocketId,
                 final DatagramSocket datagramSocket
         ) {
             this.m_message = message;
             this.m_address = address;
             this.m_port = port;
-            this.m_datagramSocketId = datagramSocketId;
             this.m_datagramSocket = datagramSocket;
         }
 
@@ -142,7 +142,7 @@ public class Dgram extends CordovaPlugin {
                         this.m_port
                 );
                 this.m_datagramSocket.send(packet);
-                Dgram.this.m_javascriptQueue.put("_onSend(" + this.m_datagramSocketId + ");");
+                Dgram.this.m_javascriptQueue.put("_onSend");
             } catch (InterruptedException e) {
                 Log.d(TAG, e.toString());
             } catch (Exception e) {
@@ -150,7 +150,6 @@ public class Dgram extends CordovaPlugin {
 
                 try {
                     Dgram.this.m_javascriptQueue.put("_onError("
-                            + this.m_datagramSocketId
                             + ",'send','"
                             + e.toString() + "');");
                 } catch (Exception innerException) {
@@ -167,11 +166,29 @@ public class Dgram extends CordovaPlugin {
         DatagramSocket datagramSocket = new DatagramSocket(port);
         datagramSocket.setBroadcast(isBroadcast);
         this.datagramSocket = datagramSocket;
+        Log.e(TAG, "darran - Opening socket");
+        final byte[] bytes;
+        try {
+            bytes = "woot".getBytes("UTF-8");
+
+            final DatagramPacket packet = new DatagramPacket(
+                    bytes,
+                    bytes.length,
+                    InetAddress.getByName("255.255.255.255"),
+                    7777);
+
+
+            datagramSocket.send(packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void startListening(
             final DatagramSocket datagramSocket
     ) {
+        Log.e(TAG, "darran - Attempting to listen");
         closeListener();
         DatagramSocketListener datagramSocketListener = new DatagramSocketListener(
                 datagramSocket
@@ -183,6 +200,9 @@ public class Dgram extends CordovaPlugin {
     private void close(
             final DatagramSocket datagramSocket
     ) {
+
+        Log.e(TAG, "darran - Closing socket");
+
         if (datagramSocket != null) {
             if (!datagramSocket.isClosed()) {
                 datagramSocket.close();
@@ -194,6 +214,8 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void closeListener() {
+        Log.e(TAG, "darran - Closing listener");
+
         final DatagramSocketListener datagramSocketListener = this.datagramSocketListener;
 
         if (datagramSocketListener != null) {
@@ -208,8 +230,7 @@ public class Dgram extends CordovaPlugin {
             final JSONArray data,
             final CallbackContext callbackContext
     ) throws JSONException {
-        final int datagramSocketId = data.getInt(0);
-        Log.d(TAG, "Call to execute " + action + " " + data.toString());
+        Log.e(TAG, "Call to execute " + action + " " + data.toString());
 
         if (!(action.equals("open") || action.equals("listen") || action.equals("send") || action.equals("close"))) {
             // Returning false results in an INVALID_ACTION error,
@@ -225,22 +246,21 @@ public class Dgram extends CordovaPlugin {
         try {
             if (action.equals("open")) {
                 close(datagramSocket);
-                final int port = data.getInt(1);
-                final boolean isBroadcast = data.getInt(2) == 1;
+                final int port = data.getInt(0);
+                final boolean isBroadcast = data.getInt(1) == 1;
                 open(port, isBroadcast);
                 callbackContext.success();
             } else if (action.equals("listen")) {
                 startListening(datagramSocket);
                 callbackContext.success();
             } else if (action.equals("send")) {
-                final String message = data.getString(1);
-                final String address = data.getString(2);
-                final int port = data.getInt(3);
+                final String message = data.getString(0);
+                final String address = data.getString(1);
+                final int port = data.getInt(2);
                 cordova.getThreadPool().execute(new DatagramSocketSend(
                         message,
                         address,
                         port,
-                        datagramSocketId,
                         datagramSocket
                 ));
                 callbackContext.success();
