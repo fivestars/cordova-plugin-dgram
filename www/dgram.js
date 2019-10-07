@@ -1,4 +1,3 @@
-cordova.define("cordova-plugin-dgram.dgram", function(require, exports, module) {
 var exec = cordova.require('cordova/exec');
 
 function Socket(port, isBroadcast, success, error) {
