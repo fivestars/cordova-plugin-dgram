@@ -33,12 +33,10 @@ public class Dgram extends CordovaPlugin {
     public Dgram() { }
 
     private class DatagramSocketListener extends Thread {
-        DatagramSocket m_datagramSocket;
+        DatagramSocket datagramSocket;
 
-        DatagramSocketListener(
-                DatagramSocket datagramSocket
-        ) {
-            this.m_datagramSocket = datagramSocket;
+        DatagramSocketListener() {
+            this.datagramSocket = datagramSocket;
         }
 
         public void run() {
@@ -50,14 +48,14 @@ public class Dgram extends CordovaPlugin {
             DatagramPacket datagramPacket = new DatagramPacket(data, data.length);
             while (true) {
                 try {
-                    if (this.m_datagramSocket.isClosed()) {
+                    if (this.datagramSocket.isClosed()) {
                         Log.d(TAG, "Exiting message loop because socket is closed.");
                         return;
                     }
 
                     // Reset the length in case we receive an incomplete DatagramPacket
                     datagramPacket.setLength(data.length);
-                    this.m_datagramSocket.receive(datagramPacket);
+                    this.datagramSocket.receive(datagramPacket);
                     String message = new String(data, 0, datagramPacket.getLength(), "UTF-8");
                     String address = datagramPacket.getAddress().getHostAddress();
                     int port = datagramPacket.getPort();
@@ -219,7 +217,6 @@ public class Dgram extends CordovaPlugin {
         closeListener();
         onMessageCallback = callbackContext;
         DatagramSocketListener datagramSocketListener = new DatagramSocketListener(
-                datagramSocket
         );
         this.datagramSocketListener = datagramSocketListener;
         datagramSocketListener.start();
