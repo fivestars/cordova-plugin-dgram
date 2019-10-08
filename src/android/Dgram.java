@@ -75,7 +75,7 @@ public class Dgram extends CordovaPlugin {
         JSONObject payload = new JSONObject();
 
         try {
-            payload.put("message", message.trim());
+            payload.put("message", message);
             payload.put("address", address);
             payload.put("port", port);
             CallbackUtil.sendPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.OK, payload));
