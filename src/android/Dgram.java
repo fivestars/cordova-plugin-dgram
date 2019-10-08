@@ -85,7 +85,6 @@ public class Dgram extends CordovaPlugin {
                     "Error occurred while creating onMessage payload: " + e.toString()
             );
             CallbackUtil.sendPluginResult(onMessageCallback, result);
-            return;
         }
     }
 
@@ -114,11 +113,8 @@ public class Dgram extends CordovaPlugin {
         String address;
         int port;
 
-        public DatagramSocketSend(
-                CallbackContext callbackContext, final String message,
-                final String address,
-                final int port
-        ) {
+        public DatagramSocketSend(CallbackContext callbackContext, final String message,
+                final String address, final int port) {
             this.sendCallback = callbackContext;
             this.message = message;
             this.address = address;
