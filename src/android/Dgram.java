@@ -150,12 +150,6 @@ public class Dgram extends CordovaPlugin {
                            final CallbackContext callbackContext) throws JSONException {
         Log.e(TAG, "Call to execute " + action + " " + data.toString());
 
-        if (!(action.equals(OPEN_ACTION) || action.equals(ON_MESSAGE_ACTION) || action.equals(SEND_ACTION) || action.equals(CLOSE_ACTION))) {
-            // Returning false results in an INVALID_ACTION error,
-            // which translates to an error callback in the JavaScript
-            return false;
-        }
-
         if (datagramSocket == null && !action.equals(OPEN_ACTION)) {
             callbackContext.error("DatagramSocket has not been opened!");
             return true;
@@ -185,6 +179,9 @@ public class Dgram extends CordovaPlugin {
                 closeSocket();
                 callbackContext.success();
                 break;
+
+            default:
+                return false;
         }
 
         return true;
