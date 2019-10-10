@@ -1,5 +1,7 @@
 package org.apache.cordova.dgram;
 
+import android.util.Log;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 

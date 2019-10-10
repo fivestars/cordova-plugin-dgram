@@ -17,7 +17,7 @@ public class Dgram extends CordovaPlugin {
     private static final String TAG = Dgram.class.getSimpleName();
 
     private static final String OPEN_ACTION = "open";
-    private static final String ON_MESSAGE_ACTION = "onMessage";
+    private static final String LISTEN_ACTION = "listen";
     private static final String SEND_ACTION = "send";
     private static final String CLOSE_ACTION = "close";
 
@@ -42,7 +42,7 @@ public class Dgram extends CordovaPlugin {
                 openSocket(action, data, callbackContext);
                 break;
 
-            case ON_MESSAGE_ACTION:
+            case LISTEN_ACTION:
                 startListening(callbackContext);
                 break;
 

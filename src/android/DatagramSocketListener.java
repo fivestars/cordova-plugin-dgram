@@ -1,12 +1,17 @@
 package org.apache.cordova.dgram;
 
+import android.util.Log;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.PluginResult;
+
 import org.json.JSONObject;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 
-private class DatagramSocketListener extends Thread {
+class DatagramSocketListener extends Thread {
     private static final String TAG = DatagramSocketListener.class.getSimpleName();
 
     private DatagramSocket datagramSocket;
@@ -57,9 +62,9 @@ private class DatagramSocketListener extends Thread {
             payload.put("message", message);
             payload.put("address", address);
             payload.put("port", port);
-            CallbackUtil.emitPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.OK, payload));
+            CallbackUtil.emitPluginResult(this.callbackContext, new PluginResult(PluginResult.Status.OK, payload));
         } catch (Exception e) {
-            Log.e(TAG, "Exception emitting message:" + exception.toString());
+            Log.e(TAG, "Exception emitting message:" + e.toString());
         }
     }
 
@@ -67,9 +72,9 @@ private class DatagramSocketListener extends Thread {
         try {
             JSONObject payload = new JSONObject();
             payload.put("error", e.toString());
-            CallbackUtil.emitPluginResult(onMessageCallback, new PluginResult(PluginResult.Status.ERROR, payload));
+            CallbackUtil.emitPluginResult(this.callbackContext, new PluginResult(PluginResult.Status.ERROR, payload));
         } catch (Exception exception) {
-            Log.e(TAG, "Exception emitting message:" + exception.toString());
+            Log.e(TAG, "Exception emitting message:" + e.toString());
         }
     }
 }

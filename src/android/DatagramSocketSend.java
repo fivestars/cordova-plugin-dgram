@@ -1,11 +1,15 @@
 package org.apache.cordova.dgram;
 
+import android.util.Log;
+
+import org.apache.cordova.CallbackContext;
+
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
-private class DatagramSocketSend implements Runnable {
+class DatagramSocketSend implements Runnable {
     private static final String TAG = DatagramSocketSend.class.getSimpleName();
 
     private DatagramSocket datagramSocket;
