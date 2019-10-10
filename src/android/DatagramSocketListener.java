@@ -27,6 +27,7 @@ private class DatagramSocketListener extends Thread {
         // For now allowing 10 megabytes which seems plenty large.
         byte[] data = new byte[1024*10];
         DatagramPacket datagramPacket = new DatagramPacket(data, data.length);
+        emitMessageResult("listener started", "", 0);
 
         while (true) {
             try {

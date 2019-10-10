@@ -88,12 +88,17 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void startListening(CallbackContext callbackContext) {
-        closeListener();
-        this.datagramSocketListener = new DatagramSocketListener(
-            this.datagramSocket,
-            callbackContext
-        );
-        this.datagramSocketListener.start();
+        try {
+            closeListener();
+            this.datagramSocketListener = new DatagramSocketListener(
+                this.datagramSocket,
+                callbackContext
+            );
+            this.datagramSocketListener.start();
+        } catch (SocketException e) {
+            Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
+            callbackContext.error("'" + e.toString() + "'");
+        }
     }
 
     private void closeSocket() {
