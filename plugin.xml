@@ -11,10 +11,6 @@
     <repo>https://github.com/andischerer/cordova-plugin-dgram.git</repo>
     <issue>https://github.com/andischerer/cordova-plugin-dgram/issues</issue>
 
-    <js-module src="www/dgram.js" name="dgram">
-        <clobbers target="dgram" />
-    </js-module>
-
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Dgram" >
@@ -22,6 +18,7 @@
             </feature>
         </config-file>
        <source-file src="src/android/Dgram.java" target-dir="src/org/apache/cordova/dgram/" />
+        <source-file src="src/android/CallbackUtil.java" target-dir="src/org/apache/cordova/dgram/" />
     </platform>
 
 </plugin>
