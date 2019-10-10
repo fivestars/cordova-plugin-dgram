@@ -49,11 +49,12 @@ public class Dgram extends CordovaPlugin {
             case SEND_ACTION:
                 final String message = data.getString(0);
                 final String address = data.getString(1);
-                final int sendPort = data.getInt(2);
-                cordova.getThreadPool().execute(new DatagramSocketSend(callbackContext,
-                        message,
-                        address,
-                        sendPort
+                final int port = data.getInt(2);
+                cordova.getThreadPool().execute(new DatagramSocketSend(
+                    callbackContext,
+                    message,
+                    address,
+                    port
                 ));
                 break;
 
@@ -77,7 +78,7 @@ public class Dgram extends CordovaPlugin {
             open(port, isBroadcast);
             callbackContext.success();
         } catch (SocketException e) {
-            Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
+            Log.e(TAG, "Attempting open socket failed with: " + e.toString(), e);
             callbackContext.error("'" + e.toString() + "'");
         }
     }
@@ -96,7 +97,7 @@ public class Dgram extends CordovaPlugin {
             );
             this.datagramSocketListener.start();
         } catch (SocketException e) {
-            Log.e(TAG, "Attempting " + action + " failed with: " + e.toString(), e);
+            Log.e(TAG, "Attempting to start listening failed with: " + e.toString(), e);
             callbackContext.error("'" + e.toString() + "'");
         }
     }
