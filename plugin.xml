@@ -17,8 +17,10 @@
                 <param name="android-package" value="org.apache.cordova.dgram.Dgram"/>
             </feature>
         </config-file>
-       <source-file src="src/android/Dgram.java" target-dir="src/org/apache/cordova/dgram/" />
+        <source-file src="src/android/Dgram.java" target-dir="src/org/apache/cordova/dgram/" />
         <source-file src="src/android/CallbackUtil.java" target-dir="src/org/apache/cordova/dgram/" />
+        <source-file src="src/android/DatagramSocketListener.java" target-dir="src/org/apache/cordova/dgram/" />
+        <source-file src="src/android/DatagramSocketSend.java" target-dir="src/org/apache/cordova/dgram/" />
     </platform>
 
 </plugin>
