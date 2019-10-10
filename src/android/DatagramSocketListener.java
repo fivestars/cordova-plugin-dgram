@@ -12,8 +12,6 @@ import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 
 class DatagramSocketListener extends Thread {
-    private static final String TAG = DatagramSocketListener.class.getSimpleName();
-
     private DatagramSocket datagramSocket;
     private CallbackContext callbackContext;
 
@@ -37,7 +35,7 @@ class DatagramSocketListener extends Thread {
         while (true) {
             try {
                 if (this.datagramSocket == null ||  this.datagramSocket.isClosed()) {
-                    Log.d(TAG, "Exiting message loop because socket is closed.");
+                    Log.d(Dgram.TAG, "Exiting message loop because socket is closed.");
                     return;
                 }
 
@@ -47,10 +45,10 @@ class DatagramSocketListener extends Thread {
                 String message = new String(data, 0, datagramPacket.getLength(), StandardCharsets.UTF_8);
                 String address = datagramPacket.getAddress().getHostAddress();
                 int port = datagramPacket.getPort();
-                Log.d(TAG, "Received message " + message + " from " + address + " and port " + port);
+                Log.d(Dgram.TAG, "Received message " + message + " from " + address + " and port " + port);
                 emitMessageResult(message, address, port);
             } catch (Exception e) {
-                Log.d(TAG, "Received exception:" + e.toString());
+                Log.d(Dgram.TAG, "Received exception:" + e.toString());
                 emitMessageErrorResult(e);
             }
         }
@@ -64,7 +62,7 @@ class DatagramSocketListener extends Thread {
             payload.put("port", port);
             CallbackUtil.emitPluginResult(this.callbackContext, new PluginResult(PluginResult.Status.OK, payload));
         } catch (Exception e) {
-            Log.e(TAG, "Exception emitting message:" + e.toString());
+            Log.e(Dgram.TAG, "Exception emitting message:" + e.toString());
         }
     }
 
@@ -74,7 +72,7 @@ class DatagramSocketListener extends Thread {
             payload.put("error", e.toString());
             CallbackUtil.emitPluginResult(this.callbackContext, new PluginResult(PluginResult.Status.ERROR, payload));
         } catch (Exception exception) {
-            Log.e(TAG, "Exception emitting message:" + e.toString());
+            Log.e(Dgram.TAG, "Exception emitting message:" + e.toString());
         }
     }
 }

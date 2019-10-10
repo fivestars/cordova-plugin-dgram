@@ -10,8 +10,6 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
 class DatagramSocketSend implements Runnable {
-    private static final String TAG = DatagramSocketSend.class.getSimpleName();
-
     private DatagramSocket datagramSocket;
     private CallbackContext callbackContext;
     private String message;
@@ -35,7 +33,7 @@ class DatagramSocketSend implements Runnable {
     public void run() {
         try {
             if (this.datagramSocket == null || this.datagramSocket.isClosed()) {
-                Log.d(TAG, "Trying to send but socket closed");
+                Log.d(Dgram.TAG, "Trying to send but socket closed");
                 return;
             }
 
@@ -50,8 +48,8 @@ class DatagramSocketSend implements Runnable {
             this.datagramSocket.send(packet);
             this.callbackContext.success();
         } catch (Exception e) {
-            Log.e(TAG, "Send exception: " + e.toString(), e);
-            this.callbackContext.error("Send exception: " + e.toString());
+            Log.e(Dgram.TAG, "Send exception: " + e.toString(), e);
+            this.callbackContext.error("Exception sending message: " + e.toString());
         }
     }
 }

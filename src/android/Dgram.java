@@ -14,7 +14,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 
 public class Dgram extends CordovaPlugin {
-    private static final String TAG = Dgram.class.getSimpleName();
+    public static final String TAG = Dgram.class.getSimpleName();
 
     private static final String OPEN_ACTION = "open";
     private static final String LISTEN_ACTION = "listen";
@@ -28,8 +28,11 @@ public class Dgram extends CordovaPlugin {
     private DatagramSocketListener datagramSocketListener;
 
     @Override
-    public boolean execute(final String action, final JSONArray data,
-                           final CallbackContext callbackContext) throws JSONException {
+    public boolean execute(
+        final String action, 
+        final JSONArray data,
+        final CallbackContext callbackContext
+    ) throws JSONException {
         Log.e(TAG, "Call to execute " + action + " " + data.toString());
 
         if (datagramSocket == null && !action.equals(OPEN_ACTION)) {
@@ -39,17 +42,18 @@ public class Dgram extends CordovaPlugin {
 
         switch (action) {
             case OPEN_ACTION:
-                openSocket(action, data, callbackContext);
+                this.openSocket(action, data, callbackContext);
                 break;
 
             case LISTEN_ACTION:
-                startListening(callbackContext);
+                this.startListening(callbackContext);
                 break;
 
             case SEND_ACTION:
                 final String message = data.getString(0);
                 final String address = data.getString(1);
                 final int port = data.getInt(2);
+                
                 cordova.getThreadPool().execute(new DatagramSocketSend(
                     this.datagramSocket,
                     callbackContext,
@@ -60,7 +64,7 @@ public class Dgram extends CordovaPlugin {
                 break;
 
             case CLOSE_ACTION:
-                closeSocket();
+                this.closeSocket();
                 callbackContext.success();
                 break;
 
@@ -71,12 +75,16 @@ public class Dgram extends CordovaPlugin {
         return true;
     }
 
-    private void openSocket(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
+    private void openSocket(
+        final String action, 
+        final JSONArray data, 
+        final CallbackContext callbackContext
+    ) throws JSONException {
         closeSocket();
         final int port = data.getInt(0);
         final boolean isBroadcast = data.getBoolean(1);
         try {
-            open(port, isBroadcast);
+            this.open(port, isBroadcast);
             callbackContext.success();
         } catch (SocketException e) {
             Log.e(TAG, "Attempting open socket failed with: " + e.toString(), e);
@@ -84,14 +92,19 @@ public class Dgram extends CordovaPlugin {
         }
     }
 
-    private void open(final int port, final boolean isBroadcast) throws SocketException {
+    private void open(
+        final int port, 
+        final boolean isBroadcast
+    ) throws SocketException {
         this.datagramSocket = new DatagramSocket(port);
         this.datagramSocket.setBroadcast(isBroadcast);
     }
 
-    private void startListening(CallbackContext callbackContext) {
+    private void startListening(
+        final CallbackContext callbackContext
+    ) {
         try {
-            closeListener();
+            this.closeListener();
             this.datagramSocketListener = new DatagramSocketListener(
                 this.datagramSocket,
                 callbackContext
@@ -104,21 +117,23 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void closeSocket() {
-        if (datagramSocket != null) {
-            if (!datagramSocket.isClosed()) {
-                datagramSocket.close();
-            }
+        try {
+            if (this.datagramSocket != null) {
+                if (!this.datagramSocket.isClosed()) {
+                    this.datagramSocket.close();
+                }
 
-            this.datagramSocket = null;
-            closeListener();
+                this.datagramSocket = null;
+                this.closeListener();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Attempting to close socket failed: " + e.toString(), e);
         }
     }
 
     private void closeListener() {
-        final DatagramSocketListener datagramSocketListener = this.datagramSocketListener;
-
-        if (datagramSocketListener != null) {
-            datagramSocketListener.interrupt();
+        if (this.datagramSocketListener != null) {
+            this.datagramSocketListener.interrupt();
             this.datagramSocketListener = null;
         }
     }
