@@ -97,7 +97,7 @@ public class Dgram extends CordovaPlugin {
                 callbackContext
             );
             this.datagramSocketListener.start();
-        } catch (SocketException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Attempting to start listening failed with: " + e.toString(), e);
             callbackContext.error("'" + e.toString() + "'");
         }
