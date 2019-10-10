@@ -51,6 +51,7 @@ public class Dgram extends CordovaPlugin {
                 final String address = data.getString(1);
                 final int port = data.getInt(2);
                 cordova.getThreadPool().execute(new DatagramSocketSend(
+                    this.datagramSocket,
                     callbackContext,
                     message,
                     address,
