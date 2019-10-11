@@ -42,7 +42,7 @@ public class Dgram extends CordovaPlugin {
 
         switch (action) {
             case OPEN_ACTION:
-                this.openSocket(action, data, callbackContext);
+                this.openSocket(data, callbackContext);
                 break;
 
             case LISTEN_ACTION:
@@ -76,7 +76,6 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void openSocket(
-        final String action, 
         final JSONArray data, 
         final CallbackContext callbackContext
     ) throws JSONException {
