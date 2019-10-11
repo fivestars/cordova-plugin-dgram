@@ -49,7 +49,7 @@ class DatagramSocketListener extends Thread {
                 Log.d(Dgram.TAG, "Received message " + message + " from " + address + " and port " + port);
                 emitMessageResult(message, address, port);
             } catch (Exception e) {
-                Log.d(Dgram.TAG, "Received exception:" + e.toString());
+                Log.e(Dgram.TAG, "Exception in listener:" + e.toString());
                 emitMessageErrorResult(e);
             }
         }
