@@ -33,7 +33,7 @@ public class Dgram extends CordovaPlugin {
         final JSONArray data,
         final CallbackContext callbackContext
     ) throws JSONException {
-        Log.e(TAG, "Call to execute " + action + " " + data.toString());
+        Log.d(TAG, "Call to execute " + action + " " + data.toString());
 
         if (datagramSocket == null && !action.equals(OPEN_ACTION)) {
             callbackContext.error("DatagramSocket has not been opened!");
