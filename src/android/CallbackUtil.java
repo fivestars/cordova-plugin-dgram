@@ -10,7 +10,7 @@ public class CallbackUtil {
     /**
      * Helper function to make sure JavaScript side of cordova keeps the callback reference
      * alive. This allows the same JavaScript function to be used mutliple times via the
-     * CallbackContext stored in this plugin
+     * CallbackContext stored in this plugin.
      */
     public static void emitPluginResult(CallbackContext callback, PluginResult result) {
         if (callback == null || result == null) {

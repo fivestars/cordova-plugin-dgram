@@ -7,6 +7,7 @@ import org.apache.cordova.CallbackContext;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+
 import java.nio.charset.StandardCharsets;
 
 class DatagramSocketSend implements Runnable {
@@ -33,11 +34,10 @@ class DatagramSocketSend implements Runnable {
     public void run() {
         try {
             if (this.datagramSocket == null || this.datagramSocket.isClosed()) {
-                Log.d(Dgram.TAG, "Trying to send but socket closed");
+                Log.d(Dgram.TAG, "Attempted to send message but socket is closed.");
                 return;
             }
 
-            // Threaded send to prevent NetworkOnMainThreadException
             final byte[] bytes = this.message.getBytes(StandardCharsets.UTF_8);
             final DatagramPacket packet = new DatagramPacket(
                     bytes,
@@ -45,6 +45,7 @@ class DatagramSocketSend implements Runnable {
                     InetAddress.getByName(this.address),
                     this.port
             );
+            // The send is wrapped in this thread to prevent NetworkOnMainThreadException
             this.datagramSocket.send(packet);
             this.callbackContext.success();
         } catch (Exception e) {

@@ -22,8 +22,8 @@ public class Dgram extends CordovaPlugin {
     private static final String CLOSE_ACTION = "close";
 
     // It is expected that these are opened and closed in lockstep but
-    // because Cordova does not accept a function as parameter in the 
-    // JSONArray the open is a two step process.
+    // because Cordova does not accept a function as a value in the
+    // JSONArray the open is a two step process (first open, then listen).
     private DatagramSocket datagramSocket;
     private DatagramSocketListener datagramSocketListener;
 
@@ -36,7 +36,7 @@ public class Dgram extends CordovaPlugin {
         Log.d(TAG, "Call to execute " + action + " " + data.toString());
 
         if (datagramSocket == null && !action.equals(OPEN_ACTION)) {
-            callbackContext.error("DatagramSocket has not been opened!");
+            callbackContext.error("DatagramSocket is not set!");
             return true;
         }
 
@@ -80,7 +80,7 @@ public class Dgram extends CordovaPlugin {
         final JSONArray data, 
         final CallbackContext callbackContext
     ) throws JSONException {
-        closeSocket();
+        this.closeSocket();
         final int port = data.getInt(0);
         final boolean isBroadcast = data.getBoolean(1);
         try {
