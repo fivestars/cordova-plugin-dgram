@@ -117,13 +117,14 @@ public class Dgram extends CordovaPlugin {
 
     private void closeSocket() {
         try {
+            this.closeListener();
+ 
             if (this.datagramSocket != null) {
                 if (!this.datagramSocket.isClosed()) {
                     this.datagramSocket.close();
                 }
 
                 this.datagramSocket = null;
-                this.closeListener();
             }
         } catch (Exception e) {
             Log.e(TAG, "Attempting to close socket failed: " + e.toString(), e);

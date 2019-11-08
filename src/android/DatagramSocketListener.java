@@ -49,6 +49,10 @@ class DatagramSocketListener extends Thread {
                 Log.d(Dgram.TAG, "Received message " + message + " from " + address + " and port " + port);
                 emitMessageResult(message, address, port);
             } catch (Exception e) {
+                if (this.isInterrupted()) {
+                    Log.d(Dgram.TAG, "Exiting message loop because listener was interrupted.");
+                    return;
+                }
                 Log.e(Dgram.TAG, "Exception in listener:" + e.toString());
                 emitMessageErrorResult(e);
             }
