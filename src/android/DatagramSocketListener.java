@@ -35,6 +35,11 @@ class DatagramSocketListener extends Thread {
 
         while (true) {
             try {
+                if (this.isInterrupted()) {
+                    Log.d(Dgram.TAG, "Exiting message loop because listener was interrupted.");
+                    return;
+                }
+
                 if (this.datagramSocket == null ||  this.datagramSocket.isClosed()) {
                     Log.d(Dgram.TAG, "Exiting message loop because socket is closed.");
                     return;
