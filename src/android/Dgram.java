@@ -31,8 +31,8 @@ public class Dgram extends CordovaPlugin {
     public void onDestroy() {
         super.onDestroy();
 
-        log.d(TAG, "onDestroy: cleanup thread and socket")
-        closeSocket()
+        log.d(TAG, "onDestroy: cleanup thread and socket");
+        closeSocket();
     }
 
     @Override
