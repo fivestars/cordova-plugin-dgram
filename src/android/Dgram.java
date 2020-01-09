@@ -28,8 +28,16 @@ public class Dgram extends CordovaPlugin {
     private DatagramSocketListener datagramSocketListener;
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        Log.d(TAG, "onDestroy: cleanup thread and socket");
+        closeSocket();
+    }
+
+    @Override
     public boolean execute(
-        final String action, 
+        final String action,
         final JSONArray data,
         final CallbackContext callbackContext
     ) throws JSONException {
@@ -53,7 +61,7 @@ public class Dgram extends CordovaPlugin {
                 final String message = data.getString(0);
                 final String address = data.getString(1);
                 final int port = data.getInt(2);
-                
+
                 cordova.getThreadPool().execute(new DatagramSocketSend(
                     this.datagramSocket,
                     callbackContext,
@@ -76,7 +84,7 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void openSocket(
-        final JSONArray data, 
+        final JSONArray data,
         final CallbackContext callbackContext
     ) throws JSONException {
         this.closeSocket();
@@ -92,7 +100,7 @@ public class Dgram extends CordovaPlugin {
     }
 
     private void open(
-        final int port, 
+        final int port,
         final boolean isBroadcast
     ) throws SocketException {
         this.datagramSocket = new DatagramSocket(port);
@@ -118,7 +126,7 @@ public class Dgram extends CordovaPlugin {
     private void closeSocket() {
         try {
             this.closeListener();
- 
+
             if (this.datagramSocket != null) {
                 if (!this.datagramSocket.isClosed()) {
                     this.datagramSocket.close();
